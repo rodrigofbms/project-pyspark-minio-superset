@@ -5,9 +5,3 @@ mypy==1.4.0
 pylint==3.1.0
 bandit==1.7.4
 python-dotenv
-pytest 
-selenium 
-psycopg2-binary
-minio==7.2.9
-soda-core==3.3.22
-soda-core-postgres==3.3.22
