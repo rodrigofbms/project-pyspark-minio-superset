@@ -1,0 +1,69 @@
+services:
+
+  trino:
+      image: trinodb/trino:405
+      container_name: trino
+      hostname: trino
+      ports:
+        - 8080:8080
+      volumes:
+        - ./config/hive.properties:/etc/trino/catalog/hive.properties
+        - ./config/delta.properties:/etc/trino/catalog/delta.properties
+        - ./config/iceberg.properties:/etc/trino/catalog/iceberg.properties
+        - ./config/postgres.properties:/etc/trino/catalog/postgres.properties
+      networks:
+        - bigdata
+      depends_on:
+        - metastore
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+
+  metastore-db:
+      image: mariadb:10.5.10
+      container_name: metastore-db
+      networks:
+        - bigdata
+      volumes:
+        - metastore-db:/var/lib/mysql
+      environment:
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+    
+  create-metastore-schema:
+      image: wlcamargo/hive-metastore
+      container_name: create-metastore-schema
+      depends_on:
+        - metastore-db
+      networks:
+        - bigdata
+      command: /opt/hive-metastore/bin/schematool --verbose -initSchema -dbType mysql -userName ${MYSQL_ROOT_USER} -passWord ${MYSQL_ROOT_PASSWORD} -url jdbc:mysql://metastore-db:3306/metastore_db?createDatabaseIfNotExist=true
+      restart: "on-failure"
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+    
+  metastore:
+      image: wlcamargo/hive-metastore
+      container_name: metastore
+      networks:
+        - bigdata
+      volumes:
+        - ./metastore/metastore-site.xml:/opt/hive-metastore/conf/metastore-site.xml
+        - ./metastore/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      environment:
+        - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      command: /opt/hive-metastore/bin/start-metastore -p 9083
+      depends_on:
+        - create-metastore-schema
+        - metastore-db
+      restart: always
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+
+networks:
+  bigdata:
+    driver: bridge
+
+volumes:
+  metastore-db:

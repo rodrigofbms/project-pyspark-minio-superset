@@ -1,7 +1,12 @@
 #Project
 venv/
 apps/__pycache__/*
-config-ambiente.txt
+
+#PostgreSQL
+apps/postgres_adventureworks/.env
+
+#Minio
+apps/minio/.env
 
 #Airflow
 apps/airflow/dags/__pycache__/*
