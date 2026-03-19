@@ -1,10 +1,10 @@
 #Project
 venv/
-applications/__pycache__/*
+apps/__pycache__/*
 
 #Airflow
-applications/airflow/dags/__pycache__/*
-applications/airflow/dags/__pycache__/
+apps/airflow/dags/__pycache__/*
+apps/airflow/dags/__pycache__/
 
 #Spark 
 src/notebooks/configs/.ipynb_checkpoints/*
