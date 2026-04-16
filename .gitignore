@@ -22,6 +22,8 @@ __pycache__
 __pycache__/
 .ipynb_checkpoints/*
 
+#Super Set
+apps/superset/user-superset.txt
 
 #Portainer
 apps/portainer/portainer_data

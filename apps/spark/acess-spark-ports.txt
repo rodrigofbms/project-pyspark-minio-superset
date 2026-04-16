@@ -1,0 +1,5 @@
+localhost:8083 # Spark UI Cluster
+
+localhost:8889 # Jupyter notebook
+
+localhost:4040 # Spark UI Jobs (Just when jobs running)
