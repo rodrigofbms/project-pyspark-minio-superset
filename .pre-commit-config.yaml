@@ -5,7 +5,7 @@ repos:
       - id: trailing-whitespace
         files: ^src/
       - id: check-added-large-files
-        args: ['--maxkb=10000']
+        args: ['--maxkb=5000']
       - id: check-yaml
         files: ^src/
       - id: check-json
