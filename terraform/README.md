@@ -52,14 +52,22 @@ curl ifconfig.me
 gcloud init
 ```
 
-## Create firewall rules
+## Criando a regra de firewall
 ### For private IP
 ```
 gcloud compute firewall-rules create bigdata-rule-restrict-ip --network=default --allow=tcp:80,tcp:443,tcp:5432,tcp:5435,tcp:27017,tcp:3306,tcp:4040,tcp:4040,tcp:4043,tcp:7077,tcp:8005,tcp:8080,tcp:8081,tcp:8087,tcp:8180,tcp:8585,tcp:8888,tcp:8889,tcp:9000,tcp:9001,tcp:9003 --source-ranges=YOUR_IP/32 --description="Allow access to specific ports only from my public IP"
 ```
 
-### For all
+### For all what have the IP from VM
 ```
 gcloud compute firewall-rules create bigdata-rule-public-ip --network=default --allow=tcp:8088 --source-ranges=0.0.0.0/0 --description="Allow access to port 8088 from the world"
 ```
 
+## For delete static ip is already exists
+
+```
+gcloud compute addresses list
+
+gcloud compute addresses delete NOME_IP --region= REGIAO
+
+```

@@ -164,6 +164,8 @@ nav:
     - services/spark/spark.md
     - services/portainer/portainer.md
     - services/superset/superset.md
+    - services/airflow/airflow.md
+    - services/open_metadata/open_metadata.md
   - Tools:
       - tools/index.md
   - Projects:

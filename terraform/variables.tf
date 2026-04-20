@@ -1,9 +1,9 @@
-# Criando o projeto no Terraform, precisa alterar a variável defalut para o ID do projeto que tem no GCP
+# Criando o projeto no Terraform, precisa alterar a variável "defalut" para o ID do projeto que tem no GCP
 
 variable "project" {
   description = "GCP project ID"
   type        = string
-  default     = "project-bigdata-493514"
+  default     = "projeto-bigdata-492713"
 }
 
 # Região da VM
@@ -11,7 +11,7 @@ variable "project" {
 variable "region" {
   description = "GCP region"
   type        = string
-  default     = "southamerica-east1"
+  default     = "us-central1"
 }
 
 # Zona da VM
@@ -19,7 +19,7 @@ variable "region" {
 variable "zone" {
   description = "GCP zone"
   type        = string
-  default     = "southamerica-east1-b"
+  default     = "us-central1-c"
 }
 
 # Tipo de máquina da VM
@@ -27,7 +27,7 @@ variable "zone" {
 variable "machine_type" {
   description = "GCP machine type"
   type        = string
-  default     = "n2-standard-8"
+  default     = "e2-standard-8"
 }
 
 # Tamanho do disco da VM

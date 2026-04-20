@@ -25,7 +25,7 @@ services:
       - 8889:8888 # Jupyter
       - 8083:8080 # Spark UI
       - 4040:4040 # Spark UI Jobs
-      - 7077:7077 # Default port for communication
+      - 7077:7077 # Default port for communication with workers
 
   spark-worker1:
     <<: *spark-common
@@ -67,4 +67,4 @@ services:
 
 networks:
   bigdata:
-    driver: bridge
+    external: true

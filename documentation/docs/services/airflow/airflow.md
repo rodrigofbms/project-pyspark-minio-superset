@@ -7,3 +7,11 @@ Apache Airflow is an open-source platform used for workflow orchestration, widel
 In Airflow, workflows are defined as DAGs (Directed Acyclic Graphs), which represent the sequence and dependencies between tasks. Each task can run scripts, database queries, API integrations, or ETL processes.
 
 Its main strengths are flexibility and scalability, along with a user-friendly web interface for tracking executions, identifying failures, and retrying tasks.
+
+## Ports
+
+Airflow Webserver: 8081
+
+## Docs
+
+https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html

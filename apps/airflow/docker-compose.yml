@@ -78,7 +78,7 @@ x-airflow-common:
     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 20
 
     AIRFLOW__SMTP__SMTP__HOST: 'smtp.gmail.com'
-    AIRFLOW__SMTP__SMTP__USER: 'wallacecpdg@gmail.com'
+    AIRFLOW__SMTP__SMTP__USER: ''
     AIRFLOW__SMTP__SMTP__PASSWORD: ''
     AIRFLOW__SMTP__SMTP__PORT: 587
     AIRFLOW__SMTP__SMTP__FROM: Airflow
@@ -319,4 +319,4 @@ volumes:
 
 networks:
   bigdata:
-    driver: bridge
+    external: true

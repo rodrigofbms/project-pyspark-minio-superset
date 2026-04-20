@@ -63,7 +63,7 @@ services:
 
 networks:
   bigdata:
-    driver: bridge
+    external: true
 
 volumes:
   metastore-db:

@@ -1,5 +1,7 @@
+# Definindo o IP como estático na VM
+
 resource "google_compute_address" "static" {
-  name = "static-ip"
+  name = "vm-static-ip"
 }
 
 # Criando uma instância de uma virtual machine
@@ -23,7 +25,7 @@ resource "google_compute_instance" "vm-terraform" {
   network_interface {
     network = "default"
 
-    // Condição para atribuir o IP estático apenas à primeira máquina
+    # Condição para atribuir o IP estático apenas à primeira máquina
     access_config {
       nat_ip = count.index == 0 ? google_compute_address.static.address : null
     }
@@ -41,3 +43,16 @@ resource "google_compute_instance" "vm-terraform" {
     
   EOT
 }
+
+/*
+curl → ferramenta de linha de comando para fazer requisições HTTP (baixar conteúdo da web).
+-f (fail) → faz o curl falhar silenciosamente se der erro HTTP (tipo 404 ou 500).
+-s (silent) → modo silencioso (não mostra progresso nem mensagens).
+-S (show errors) → mesmo com -s, ainda mostra erros se acontecerem.
+-L (location) → segue redirecionamentos automaticamente (muito comum em URLs que redirecionam).
+
+https://get.docker.com → URL oficial da Docker que fornece um script automatizado de instalação.
+-o get-docker.sh → salva o conteúdo baixado em um arquivo chamado get-docker.sh.
+
+sh get-docker.sh → Executa o arquivo "get-docker.sh"
+*/

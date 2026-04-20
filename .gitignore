@@ -2,6 +2,10 @@
 venv/
 apps/__pycache__/*
 
+#Open Metadata
+apps/open_metadata/user_open_metadata.txt
+apps/open_metadata/docker-volume/*
+
 #PostgreSQL
 apps/postgres_adventureworks/.env
 
