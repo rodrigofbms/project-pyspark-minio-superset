@@ -109,6 +109,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - bigdata
     ports:
       - 5432:5432
     volumes:
@@ -124,6 +126,8 @@ services:
     # Redis is limited to 7.2-bookworm due to licencing change
     # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
     image: redis:7.2-bookworm
+    networks:
+      - bigdata
     expose:
       - 6379
     healthcheck:
@@ -137,6 +141,8 @@ services:
   airflow-webserver:
     <<: *airflow-common
     command: webserver
+    networks:
+      - bigdata
     ports:
       - "8081:8080"
     healthcheck:
@@ -154,6 +160,8 @@ services:
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
+    networks:
+      - bigdata
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
       interval: 30s
@@ -169,6 +177,8 @@ services:
   airflow-worker:
     <<: *airflow-common
     command: celery worker
+    networks:
+      - bigdata
     healthcheck:
       # yamllint disable rule:line-length
       test:
@@ -192,6 +202,8 @@ services:
   airflow-triggerer:
     <<: *airflow-common
     command: triggerer
+    networks:
+      - bigdata
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
       interval: 30s
@@ -207,6 +219,8 @@ services:
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
+    networks:
+      - bigdata
     # yamllint disable rule:line-length
     command:
       - -c
@@ -270,6 +284,8 @@ services:
 
   airflow-cli:
     <<: *airflow-common
+    networks:
+      - bigdata
     profiles:
       - debug
     environment:
@@ -287,6 +303,8 @@ services:
   flower:
     <<: *airflow-common
     command: celery flower
+    networks:
+      - bigdata
     profiles:
       - flower
     ports:
@@ -305,6 +323,8 @@ services:
 
   docker-proxy:
     image: alpine:latest  
+    networks:
+      - bigdata
     container_name: docker-proxy
     command: sh -c "apk add --no-cache socat && socat TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock"
     volumes:

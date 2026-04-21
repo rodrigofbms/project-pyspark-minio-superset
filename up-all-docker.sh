@@ -9,6 +9,8 @@ SERVICES=(
     "/home/rodri/docker/project-pyspark-minio-superset/apps/superset"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/trino"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/postgres_adventureworks"
+    "/home/rodri/docker/project-pyspark-minio-superset/apps/nginx_proxy_manager"
+    "/home/rodri/docker/project-pyspark-minio-superset/documentation"
 )
 
 for SERVICE in "${SERVICES[@]}"; do

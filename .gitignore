@@ -2,12 +2,18 @@
 venv/
 apps/__pycache__/*
 
+#Nginx proxy manager
+apps/nginx_proxy_manager/letsencrypt
+
 #Open Metadata
 apps/open_metadata/user_open_metadata.txt
 apps/open_metadata/docker-volume/*
 
 #PostgreSQL
 apps/postgres_adventureworks/.env
+
+#Nginx proxy manager
+apps/nginx-proxy-manager/user.txt
 
 #Minio
 apps/minio/.env
