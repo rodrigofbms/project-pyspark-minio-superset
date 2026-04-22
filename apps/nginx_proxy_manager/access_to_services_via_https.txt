@@ -1,0 +1,23 @@
+Airflow:
+http://airflow.project-bigdata.duckdns.org/
+
+Documentation:
+http://documentation.project-bigdata.duckdns.org/
+
+Notebook Jupyter (Spark):
+http://jupyter.project-bigdata.duckdns.org/
+
+Minio:
+http://minio.project-bigdata.duckdns.org/
+
+Open Metadata:
+http://openmetadata.project-bigdata.duckdns.org/
+
+Portainer:
+http://portainer.project-bigdata.duckdns.org/
+
+Apache Super Set:
+http://superset.project-bigdata.duckdns.org/
+
+Trino:
+http://trino.project-bigdata.duckdns.org/
