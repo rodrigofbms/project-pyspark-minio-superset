@@ -1,0 +1,3 @@
+Password Jupyter: admin
+
+Token Jupyter: 571f3490f0e5cf84dc78d1d58b4caae53ab0074ff5de7b3e

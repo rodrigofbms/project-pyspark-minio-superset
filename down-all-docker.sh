@@ -5,7 +5,7 @@ SERVICES=(
     "/home/rodri/docker/project-pyspark-minio-superset/apps/airflow"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/minio"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/open_metadata"
-    "/home/rodri/docker/project-pyspark-minio-superset/apps/spark"
+    "/home/rodri/docker/project-pyspark-minio-superset/apps/spark_jupyter"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/superset"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/trino"
     "/home/rodri/docker/project-pyspark-minio-superset/apps/postgres_adventureworks"

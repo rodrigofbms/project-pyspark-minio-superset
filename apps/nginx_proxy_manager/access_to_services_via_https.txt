@@ -4,7 +4,7 @@ http://airflow.project-bigdata.duckdns.org/
 Documentation:
 http://documentation.project-bigdata.duckdns.org/
 
-Notebook Jupyter (Spark):
+Notebook Jupyter (With Spark):
 http://jupyter.project-bigdata.duckdns.org/
 
 Minio:
