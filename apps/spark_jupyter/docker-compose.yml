@@ -1,6 +1,6 @@
 services:
   spark-master:
-    image: apache/spark:3.5.1
+    image: apache/spark:3.5.0
     container_name: spark-master
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
@@ -11,7 +11,7 @@ services:
       - bigdata
 
   spark-worker1:
-    image: apache/spark:3.5.1
+    image: apache/spark:3.5.0
     container_name: spark-worker1
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
@@ -21,7 +21,7 @@ services:
       - bigdata
 
   spark-worker2:
-    image: apache/spark:3.5.1
+    image: apache/spark:3.5.0
     container_name: spark-worker2
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
