@@ -13,3 +13,9 @@ def add_data_last_update(df: pyspark.sql.DataFrame) -> pyspark.sql.DataFrame:
 def convert_table_name (table_name):
     return table_name.replace(".", "_")
 
+
+def get_query (table_name, queries, bronze_path):
+    if table_name in queries:
+        return queries[table_name].format(bronze_path=bronze_path)
+    else:
+        raise ValueError(f"No query found for table: {table_name}")
