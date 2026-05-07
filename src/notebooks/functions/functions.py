@@ -14,8 +14,8 @@ def convert_table_name (table_name):
     return table_name.replace(".", "_")
 
 
-def get_query (table_name, queries, bronze_path):
+def get_query (table_name, queries, layer_path):
     if table_name in queries:
-        return queries[table_name].format(bronze_path=bronze_path)
+        return queries[table_name].format(layer_path=layer_path)
     else:
         raise ValueError(f"No query found for table: {table_name}")

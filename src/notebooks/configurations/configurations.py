@@ -30,58 +30,68 @@ tables_postgres_adventureworks = {
     "18": "sales.specialofferproduct",
     "19": "sales.store",
     "20": "humanresources.employee",
-    "21": "humanresources.department"
+    "21": "humanresources.department",
+    "22": "person.countryregion",
+    "23": "person.person",
+    "24": "person.stateprovince",
+    "25": "person.address",
+    "26": "purchasing.shipmethod",
+    "27": "production.product"
 }
 
+
+# ---------------------------
+# ---- Silver tables --------
+# ---------------------------
 
 queries_silver = {
     "sales_countryregioncurrency" :
     f""" 
     SELECT * 
-    from delta.`{{bronze_path}}bronze_sales_countryregioncurrency` 
+    from delta.`{{layer_path}}bronze_sales_countryregioncurrency` 
     """,
     
     "sales_creditcard" :
     f""" 
     SELECT * 
-    from delta.`{{bronze_path}}bronze_sales_creditcard` 
+    from delta.`{{layer_path}}bronze_sales_creditcard` 
     """,
 
     "sales_currency" :
     f""" 
     SELECT * 
-    FROM delta.`{{bronze_path}}bronze_sales_currency` 
+    FROM delta.`{{layer_path}}bronze_sales_currency` 
     """,
 
     "sales_currencyrate" :
     f"""
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_currencyrate` 
+    FROM delta.`{{layer_path}}bronze_sales_currencyrate` 
     """,
 
      "sales_customer" :
     f"""
     SELECT
-        customerid,
-		coalesce(personid, -1),
-		coalesce(storeid, -1),
-		territoryid,
-		rowguid,
-        month_key,
-		modifieddate
-    from delta.`{{bronze_path}}bronze_sales_customer` 
+    customerid,
+    COALESCE(personid, -1) as personid,
+    COALESCE(storeid, -1) as storeid,
+    territoryid,
+    rowguid,
+    month_key,
+    modifieddate
+    FROM delta.`{{layer_path}}bronze_sales_customer` 
     """,
 
-    "sales.personcreditcard":
+    "sales_personcreditcard":
     f""" 
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales.personcreditcard` 
+    FROM delta.`{{layer_path}}bronze_sales_personcreditcard` 
     """,
 
     "sales_salesorderdetail" :
     f"""
     SELECT * 
-    FROM delta.`{{bronze_path}}bronze_sales_salesorderdetail` 
+    FROM delta.`{{layer_path}}bronze_sales_salesorderdetail` 
     """,
     
     "sales_salesorderheader" : 
@@ -89,15 +99,15 @@ queries_silver = {
     SELECT 
     salesorderid,
     customerid,
-    COALESCE(salespersonid, -1),
+    COALESCE(salespersonid, -1) as salespersonid,
     territoryid,
     billtoaddressid,
     shiptoaddressid,
     shipmethodid,
     COALESCE(creditcardid, -1) as creditcardid,
     COALESCE(currencyrateid, -1) as currencyrateid,
-    CAST(subtotal as DECIMAL (10,2)),
-    CAST(taxamt as DECIMAL (10,2)),
+    CAST(subtotal as DECIMAL(10,2)),
+    CAST(taxamt as DECIMAL(10,2)),
     CAST(freight as DECIMAL(10,2)),
     CAST(totaldue as DECIMAL(10,2)),
     orderdate,
@@ -106,50 +116,50 @@ queries_silver = {
     modifieddate,
     month_key,
     rowguid
-    FROM delta.`{{bronze_path}}bronze_sales_salesorderheader` 
+    FROM delta.`{{layer_path}}bronze_sales_salesorderheader` 
     """,
 
     "sales_salesorderheadersalesreason" :
     f"""
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_salesorderheadersalesreason`
+    FROM delta.`{{layer_path}}bronze_sales_salesorderheadersalesreason`
     """,
 
     "sales_salesperson":
     f"""
     SELECT 
     businessentityid,
-    coalesce(territoryid, -1) as territoryid,
-    coalesce(salesquota, -1) as salesquota,
+    COALESCE(territoryid, -1) as territoryid,
+    COALESCE(salesquota, -1) as salesquota,
     bonus,
-    cast(commissionpct as NUMERIC(10,3)),
-    cast(salesytd as numeric(10,2)),
-    cast(saleslastyear as numeric(10,2)),
+    CAST(commissionpct as NUMERIC(10,3)),
+    CAST(salesytd as NUMERIC(10,2)),
+    CAST(saleslastyear as NUMERIC(10,2)),
     rowguid,
     month_key,
     modifieddate
-    FROM delta.`{{bronze_path}}bronze_sales_salesperson`
+    FROM delta.`{{layer_path}}bronze_sales_salesperson`
     """,
 
     "sales_salespersonquotahistory":
     f"""
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_salespersonquotahistory`
+    FROM delta.`{{layer_path}}bronze_sales_salespersonquotahistory`
     """,
 
     "sales_salesreason":
     f"""
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_salesreason` 
+    FROM delta.`{{layer_path}}bronze_sales_salesreason` 
     """,
 
     "sales_salestaxrate":
     f""" 
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_salestaxrate`
+    FROM delta.`{{layer_path}}bronze_sales_salestaxrate`
     """,
 
-    "sales_territory":
+    "sales_salesterritory":
     f""" 
     SELECT 
     territoryid,
@@ -163,7 +173,7 @@ queries_silver = {
     rowguid,
     month_key,
     modifieddate
-    FROM delta.`{{bronze_path}}bronze_sales_territory` 
+    FROM delta.`{{layer_path}}bronze_sales_salesterritory` 
     """,
 
     "sales_salesterritoryhistory":
@@ -176,13 +186,13 @@ queries_silver = {
     rowguid,
     month_key,
     modifieddate
-    FROM delta.`{{bronze_path}}bronze_sales_salesterritoryhistory`
+    FROM delta.`{{layer_path}}bronze_sales_salesterritoryhistory`
     """,
 
     "sales_shoppingcartitem":
     f""" 
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_shoppingcartitem`
+    FROM delta.`{{layer_path}}bronze_sales_shoppingcartitem`
     """,
 
     "sales_specialoffer":
@@ -200,13 +210,13 @@ queries_silver = {
     modifieddate,
     month_key,
     rowguid
-    FROM delta.`{{bronze_path}}bronze_sales_specialoffer` 
+    FROM delta.`{{layer_path}}bronze_sales_specialoffer` 
     """,
 
     "sales_specialofferproduct":
     f""" 
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_sales_specialofferproduct` 
+    FROM delta.`{{layer_path}}bronze_sales_specialofferproduct` 
     """,
 
     "sales_store":
@@ -218,7 +228,7 @@ queries_silver = {
     rowguid,
     month_key,
     modifieddate
-    FROM delta.`{{bronze_path}}bronze_sales_store` 
+    FROM delta.`{{layer_path}}bronze_sales_store` 
     """,
 
     "humanresources_employee":
@@ -232,15 +242,191 @@ queries_silver = {
     modifieddate,
     month_key,
     rowguid
-    FROM delta.`{{bronze_path}}bronze_humanresources_employee`
+    FROM delta.`{{layer_path}}bronze_humanresources_employee`
     """,
 
     "humanresources_department":
     f""" 
     SELECT *
-    FROM delta.`{{bronze_path}}bronze_humanresources_department`
+    FROM delta.`{{layer_path}}bronze_humanresources_department`
+    """,
+
+    "person_countryregion":
+    f""" 
+    SELECT * 
+    FROM delta.`{{layer_path}}bronze_person_countryregion`
+    """,
+
+    "person_person":
+    f"""
+    SELECT 
+    businessentityid,
+    persontype,
+    firstname,
+    lastname,
+    modifieddate,
+    month_key,
+    rowguid
+    FROM delta.`{{layer_path}}bronze_person_person` 
+    """,
+
+    "person_stateprovince":
+    f"""
+    SELECT 
+    stateprovinceid,
+    stateprovincecode,
+    countryregioncode,
+    "name",
+    territoryid,
+    rowguid,
+    modifieddate,
+    month_key
+    FROM delta.`{{layer_path}}bronze_person_stateprovince`
+    """,
+
+    "person_address":
+    f""" 
+    SELECT 
+    addressid,
+    stateprovinceid,
+    addressline1,
+    city,
+    postalcode,
+    rowguid,
+    modifieddate,
+    month_key
+    FROM delta.`{{layer_path}}bronze_person_address`
+    """,
+
+
+    "purchasing_shipmethod":
+    f""" 
+    SELECT *
+    FROM delta.`{{layer_path}}bronze_purchasing_shipmethod`
+    """,
+
+    "production_product":
+    f""" 
+    SELECT
+    productid,
+    "name",
+    sellstartdate,
+    coalesce(sellenddate,'2099-12-12') as sellenddate,
+    rowguid,
+    modifieddate,
+    month_key
+    from delta.`{{layer_path}}bronze_production_product`
     """
+
+}
+
+
+
+
+# ---------------------------
+# ---- Gold tables ----------
+# ---------------------------
+queries_gold = {
+
+    "sales_by_country":
+    f"""
+    SELECT 
+    UPPER(cr.name) AS country,
+    COUNT(*) AS sales_quantity,
+    ROUND(SUM(s.subtotal)) AS total_sales
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
+    INNER JOIN delta.`{{layer_path}}silver_sales_salesterritory` st ON s.territoryid = st.territoryid
+    INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = st.countryregioncode
+    GROUP BY cr.name
+    """,
     
-    
+    "sales_per_customer":
+    f""" 
+    SELECT
+    p.businessentityid AS customer_id,
+    UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS customer_name,
+    ROUND(SUM(s.subtotal)) AS total
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
+    INNER JOIN delta.`{{layer_path}}silver_sales_customer` c ON s.customerid = c.customerid
+    INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = c.personid
+    GROUP BY p.businessentityid, p.firstname, p.lastname
+    """,
+
+    "sales_per_employee":
+    f""" 
+    SELECT
+    p.businessentityid AS employee_id,
+    UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS employee_name,
+    COUNT(*) AS quantity_sales
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
+    INNER JOIN delta.`{{layer_path}}silver_sales_salesperson` sp ON sp.businessentityid = s.salespersonid
+    INNER JOIN delta.`{{layer_path}}silver_humanresources_employee` e ON e.businessentityid = sp.businessentityid
+    INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = e.businessentityid
+    GROUP BY p.businessentityid, p.firstname, p.lastname
+    """,
+
+    "sales_per_city_country":
+    f"""
+    SELECT 
+    UPPER(cr.name) AS country_sale,
+    UPPER(a.city) AS city_sale,
+    COUNT(*) AS quantity_sales,
+    ROUND(SUM(s.subtotal)) AS total_sales
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
+    INNER JOIN delta.`{{layer_path}}silver_person_address` a ON a.addressid = s.shiptoaddressid
+    INNER JOIN delta.`{{layer_path}}silver_person_stateprovince` sp ON sp.stateprovinceid = a.stateprovinceid
+    INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = sp.countryregioncode
+    GROUP BY cr.name, a.city
+    """,
+
+    "quantity_sales_per_ship_method":
+    f""" 
+    SELECT 
+    UPPER(sm.name) AS ship_name,
+    sm.shipbase AS ship_base,
+    sm.shiprate AS ship_rate,
+    COUNT(*) AS quantity,
+    SUM(CASE
+    	WHEN (s.duedate - s.orderdate) > INTERVAL '14 days' THEN 1
+    	ELSE 0
+    	END) AS delayed_deliveries
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
+    INNER JOIN delta.`{{layer_path}}silver_purchasing_shipmethod` sm on sm.shipmethodid = s.shipmethodid
+    GROUP BY sm.name, sm.shipbase, sm.shiprate
+    """,
+
+    "sales_per_card_type":
+    f"""
+    SELECT
+    UPPER(cc.cardtype) AS card_type,
+    COUNT(*) AS sales_quantity
+    FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
+    INNER JOIN delta.`{{layer_path}}silver_sales_creditcard` cc ON cc.creditcardid = s.creditcardid
+    GROUP BY cc.cardtype
+    """,
+
+    "quantity_sales_per_product":
+    f""" 
+    SELECT
+    p.productid AS product_id,
+    UPPER(p.name) AS product_name,
+    SUM(s.orderqty) AS quantity_sales,
+    COUNT(s.specialofferid != 1) AS quantity_sales_discount
+    FROM delta.`{{layer_path}}silver_sales_salesorderdetail` s
+    INNER JOIN delta.`{{layer_path}}silver_sales_specialofferproduct` sop ON sop.productid = s.productid
+    INNER JOIN delta.`{{layer_path}}silver_production_product` p ON p.productid = sop.productid
+    GROUP BY p.productid, p.name
+    """
+
+
+
+
     
 }
+
+
+
+
+
+
+
