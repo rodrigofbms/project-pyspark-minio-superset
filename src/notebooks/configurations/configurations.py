@@ -333,11 +333,12 @@ queries_gold = {
     SELECT 
     UPPER(cr.name) AS country,
     COUNT(*) AS sales_quantity,
-    ROUND(SUM(s.subtotal)) AS total_sales
+    ROUND(SUM(s.subtotal)) AS total_sales,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_sales_salesterritory` st ON s.territoryid = st.territoryid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = st.countryregioncode
-    GROUP BY cr.name
+    GROUP BY cr.name, s.modifieddate
     """,
     
     "sales_per_customer":
@@ -345,11 +346,12 @@ queries_gold = {
     SELECT
     p.businessentityid AS customer_id,
     UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS customer_name,
-    ROUND(SUM(s.subtotal)) AS total
+    ROUND(SUM(s.subtotal)) AS total,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_sales_customer` c ON s.customerid = c.customerid
     INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = c.personid
-    GROUP BY p.businessentityid, p.firstname, p.lastname
+    GROUP BY p.businessentityid, p.firstname, p.lastname, s.modifieddate
     """,
 
     "sales_per_employee":
@@ -357,12 +359,13 @@ queries_gold = {
     SELECT
     p.businessentityid AS employee_id,
     UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS employee_name,
-    COUNT(*) AS quantity_sales
+    COUNT(*) AS quantity_sales,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
     INNER JOIN delta.`{{layer_path}}silver_sales_salesperson` sp ON sp.businessentityid = s.salespersonid
     INNER JOIN delta.`{{layer_path}}silver_humanresources_employee` e ON e.businessentityid = sp.businessentityid
     INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = e.businessentityid
-    GROUP BY p.businessentityid, p.firstname, p.lastname
+    GROUP BY p.businessentityid, p.firstname, p.lastname, s.modifieddate
     """,
 
     "sales_per_city_country":
@@ -371,12 +374,13 @@ queries_gold = {
     UPPER(cr.name) AS country_sale,
     UPPER(a.city) AS city_sale,
     COUNT(*) AS quantity_sales,
-    ROUND(SUM(s.subtotal)) AS total_sales
+    ROUND(SUM(s.subtotal)) AS total_sales,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_person_address` a ON a.addressid = s.shiptoaddressid
     INNER JOIN delta.`{{layer_path}}silver_person_stateprovince` sp ON sp.stateprovinceid = a.stateprovinceid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = sp.countryregioncode
-    GROUP BY cr.name, a.city
+    GROUP BY cr.name, a.city, s.modifieddate
     """,
 
     "quantity_sales_per_ship_method":
@@ -389,20 +393,22 @@ queries_gold = {
     SUM(CASE
     	WHEN (s.duedate - s.orderdate) > INTERVAL '14 days' THEN 1
     	ELSE 0
-    	END) AS delayed_deliveries
+    	END) AS delayed_deliveries,
+     s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_purchasing_shipmethod` sm on sm.shipmethodid = s.shipmethodid
-    GROUP BY sm.name, sm.shipbase, sm.shiprate
+    GROUP BY sm.name, sm.shipbase, sm.shiprate, s.modifieddate
     """,
 
     "sales_per_card_type":
     f"""
     SELECT
     UPPER(cc.cardtype) AS card_type,
-    COUNT(*) AS sales_quantity
+    COUNT(*) AS sales_quantity,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
     INNER JOIN delta.`{{layer_path}}silver_sales_creditcard` cc ON cc.creditcardid = s.creditcardid
-    GROUP BY cc.cardtype
+    GROUP BY cc.cardtype, s.modifieddate
     """,
 
     "quantity_sales_per_product":
@@ -411,11 +417,12 @@ queries_gold = {
     p.productid AS product_id,
     UPPER(p.name) AS product_name,
     SUM(s.orderqty) AS quantity_sales,
-    COUNT(s.specialofferid != 1) AS quantity_sales_discount
+    COUNT(s.specialofferid != 1) AS quantity_sales_discount,
+    s.modifieddate
     FROM delta.`{{layer_path}}silver_sales_salesorderdetail` s
     INNER JOIN delta.`{{layer_path}}silver_sales_specialofferproduct` sop ON sop.productid = s.productid
     INNER JOIN delta.`{{layer_path}}silver_production_product` p ON p.productid = sop.productid
-    GROUP BY p.productid, p.name
+    GROUP BY p.productid, p.name, s.modifieddate
     """
 
 
