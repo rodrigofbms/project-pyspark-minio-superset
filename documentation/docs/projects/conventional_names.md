@@ -4,14 +4,14 @@
 ```
 Example of sctrcuture from file:
 
-(Number_of_script)_(Process from Pipeline)_(Layer/source)_(target)
+(Number_of_script)_(Type of load)_(Process from pipeline)_(Layer/source)_(Target)
 ```
 
 ```
-├── 01_EL_postgres_to_minio_landing_parquet.ipynb
-├── 02_EL_minio_landing_to_bronze_delta.ipynb
-├── 03_Transform_bronze_to_silver.ipynb
-├── 04_Agregation_silver_to_gold.ipynb
+├── 01_full_extract_postgres_to_minio_landing_parquet.ipynb
+├── 02_full_load_minio_landing_to_bronze_delta.ipynb
+├── 03_full_transform_bronze_to_silver.ipynb
+├── 04_full_agregation_silver_to_gold.ipynb
 ```
 
 ## Tables
