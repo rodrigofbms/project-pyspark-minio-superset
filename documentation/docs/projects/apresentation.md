@@ -8,12 +8,8 @@
 ## Structure from Jupyter notebook
 ```
 src/
-└── notebooks/
-    ├── 01_EL_postgres_to_minio_landing_parquet.ipynb
-    ├── 02_EL_minio_landing_to_bronze_delta.ipynb
-    ├── 03_Transform_bronze_to_silver.ipynb
-    ├── 04_Agregation_silver_to_gold.ipynb
-    ├── Examples/
+└── notebooks
+    ├── Examples
     │   ├── 00_hello-spark.ipynb
     │   ├── 01_example_write_delta_table.ipynb
     │   ├── 02_example_read_delta_table.ipynb
@@ -23,11 +19,30 @@ src/
     │   ├── 06_merge_delta_tables.ipynb
     │   ├── 07_spark_sql.ipynb
     │   └── 08_structured_streaming.ipynb
-    ├── configurations/
+    ├── __init__.py
+    ├── configurations
+    │   ├── __init__.py
     │   └── configurations.py
-    ├── functions/
+    ├── elt
+    │   ├── __init__.py
+    │   ├── full load
+    │   │   ├── 01_full_extract_postgres_to_minio_landing_parquet.ipynb
+    │   │   ├── 02_full_load_landing_to_bronze_delta.ipynb
+    │   │   ├── 03_full_transform_bronze_to_silver.ipynb
+    │   │   ├── 04_full_agregation_silver_to_gold.ipynb
+    │   │   └── __init__.py
+    │   ├── incremental load
+    │   │   ├── 01_incremental_extract_postgresql_to_landing_minio_parquet.ipynb
+    │   │   ├── 02_incremental_load_landing_to_bronze_delta.ipynb
+    │   │   ├── 03_incremental_transform_bronze_to_silver.ipynb
+    │   │   ├── 04_incremental_agregation_silver_to_gold.ipynb
+    │   │   └── __init__.py
+    ├── functions
+    │   ├── __init__.py
     │   └── functions.py
     └── hello_world.py
+
+
 ```
 
 ## Notebooks
