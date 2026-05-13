@@ -1,6 +1,7 @@
 services:
   spark-master:
-    image: apache/spark:3.5.0
+    build:
+      context: ./spark
     container_name: spark-master
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
@@ -11,7 +12,8 @@ services:
       - bigdata
 
   spark-worker1:
-    image: apache/spark:3.5.0
+    build:
+      context: ./spark
     container_name: spark-worker1
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
@@ -21,7 +23,8 @@ services:
       - bigdata
 
   spark-worker2:
-    image: apache/spark:3.5.0
+    build:
+      context: ./spark
     container_name: spark-worker2
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
@@ -31,7 +34,8 @@ services:
       - bigdata
 
   jupyter:
-    image: jupyter/pyspark-notebook:latest
+    build:
+      context: ./jupyter
     container_name: jupyter
     user: root # You must log in as root to change the UID and GID
     ports:

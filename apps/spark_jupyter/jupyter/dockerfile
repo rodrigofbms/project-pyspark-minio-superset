@@ -1,0 +1,19 @@
+FROM jupyter/pyspark-notebook:latest
+
+USER root
+
+# Hadoop AWS
+RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar \
+    -P /usr/local/spark/jars/
+
+# AWS SDK
+RUN wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.767/aws-java-sdk-bundle-1.12.767.jar \
+    -P /usr/local/spark/jars/
+
+# PostgreSQL JDBC
+RUN wget https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.2/postgresql-42.7.2.jar \
+    -P /usr/local/spark/jars/
+
+# Delta Lake
+RUN wget https://repo1.maven.org/maven2/io/delta/delta-spark_2.12/3.2.0/delta-spark_2.12-3.2.0.jar \
+    -P /usr/local/spark/jars/
