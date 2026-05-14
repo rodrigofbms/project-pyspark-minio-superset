@@ -1,8 +1,10 @@
+# Creating the same file in .py to use it on apache airflow orchestration
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession, functions
 from pyspark.sql.functions import date_format
 import logging
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Import for get the environment variables 
 from dotenv import load_dotenv
@@ -21,40 +23,38 @@ POSTGRES_CONTAINER=os.getenv("POSTGRES_CONTAINER")
 POSTGRES_USER=os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD=os.getenv("POSTGRES_PASSWORD")
 
-conf = SparkConf()
-
-spark = SparkSession.builder \
-.appName("Incremental extract from postgres adventureworks to minIO landing") \
-.config("spark.master", "spark://spark-master:7077") \
-.config("spark.hadoop.fs.s3a.endpoint",f"http://{MINIO_CONTAINER}:9000") \
-.config("spark.hadoop.fs.s3a.access.key", MINIO_USER) \
-.config("spark.hadoop.fs.s3a.secret.key", MINIO_PASSWORD) \
-.config("spark.hadoop.fs.s3a.path.style.access", True) \
-.config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-.config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") \
-.config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-.config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-.config("hive.metastore.uris", "thrift://metastore:9083") \
-.getOrCreate()
+def configure_spark():
+    conf = SparkConf()
+    
+    conf.setAppName("Incremental extract from postgres to minIO landing Parallel") # Spark application name, Usefull for logs
+    conf.set("spark.master", "spark://spark-master:7077") # set the Spark container to be distributed among the workers
+    conf.set("spark.hadoop.fs.s3a.endpoint",f"http://{MINIO_CONTAINER}:9000") # Container and Port from MinIO
+    conf.set("spark.hadoop.fs.s3a.access.key", MINIO_USER) # Login from MinIO
+    conf.set("spark.hadoop.fs.s3a.secret.key", MINIO_PASSWORD) # Password from MinIO
+    # Add the jars from hadoop-aws and aws-java-sdk-bundle is necessary for org.apache.hadoop.fs.s3a.S3AFileSystem,
+    # add the Postgresql JDBC jar is necessary for connect on database. Add the delta-spark is necessary for delta catalog, all this Jars is auto-download from spark
+    conf.set("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4,"
+            "com.amazonaws:aws-java-sdk-bundle:1.12.367,"
+            "org.postgresql:postgresql:42.7.2,"
+            "io.delta:delta-spark_2.12:3.1.0" )
+    conf.set("spark.hadoop.fs.s3a.path.style.access", True) # Enforces the use of URLs as the format. Without this, Spark attempts to use the AWS standard (bucket.endpoint), which fails in MinIO
+    conf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") # Talk to Hadoop/Spark to use new conector S3A
+    conf.set("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") # How to credentials are acess via config(access key + secret)
+    conf.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") # active extension from Delta Lake
+    conf.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") # Change the standard catalog from spark to Delta 
+    conf.set("hive.metastore.uris", "thrift://metastore:9083") # Connect to Hive Metastore external
+    
+    spark = SparkSession.builder.config(conf=conf).getOrCreate()
+    return spark
 
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Logging the Start process from ingestion
-logging.info("Starting incremental extract from Postgres adventureworks to MinIO landing...")
 
-for table_name in config_file.tables_postgres_adventureworks.values():
-    
+def process_table(spark, table_name, table_name_converted, output_table_path):
     try:
-        # convert the table name from postgres to name in minIO s3
-        table_name_converted_to_s3 = func_file.convert_table_name(table_name)
-
-        # Landing path
-        landing_path = config_file.data_lakehouse_path["landing"]
-        # Output path
-        output_table_path = f"{landing_path}{table_name_converted_to_s3}"
-
+    
         # Getting max date value from minIO Landing in the modifieddate column. limit at 1 result and get this result on 1º row at max_modifieddate column
         max_modified_date_landing = spark.read.format("parquet").load(output_table_path) \
             .select(functions.max("modifieddate").alias("max_modifieddate")).limit(1).collect()[0]["max_modifieddate"]
@@ -63,7 +63,7 @@ for table_name in config_file.tables_postgres_adventureworks.values():
         query_filtered = f""" select * from {table_name} where modifieddate > '{max_modified_date_landing}' """
         
         # Logging the processing
-        logging.info(f"processing table {table_name_converted_to_s3}")
+        logging.info(f"processing table {table_name_converted}")
         
         # Reading table in postgres via JDBC
         df_input_data = spark.read \
@@ -75,14 +75,15 @@ for table_name in config_file.tables_postgres_adventureworks.values():
             .option("driver", "org.postgresql.Driver") \
             .load() 
 
+        rows_to_update = df_input_data.count()
         
-        if df_input_data.count() == 0:
+        if rows_to_update == 0:
             # Logging if get no rows to update in minio landing
-            logging.info(f"No new data to process for table {table_name_converted_to_s3}")
+            logging.info(f"No new data to process for table {table_name_converted}")
 
         else:
             # Logging number of rows to update
-            logging.info(f"Number of new rows to update for table {table_name_converted_to_s3}: {df_input_data.count()}")
+            logging.info(f"Number of new rows to update for table {table_name_converted}: {rows_to_update}")
             
             # Adding a new column date related the load data
             df_with_update_data = func_file.add_data_last_update(df_input_data)
@@ -91,17 +92,58 @@ for table_name in config_file.tables_postgres_adventureworks.values():
             df_with_month_partition = df_with_update_data.withColumn("month_key", date_format(df_with_update_data["modifieddate"], "yyyy-MM"))
             
             # Updating the dataframe on minIO landing
-            logging.info(f"Updating table {table_name_converted_to_s3}...")
+            logging.info(f"Updating table {table_name_converted}...")
             df_with_month_partition.write.format("parquet").mode("append").partitionBy("month_key").save(output_table_path)
             
             # Logging the sucessfully process
-            logging.info(f"Table {table_name_converted_to_s3} Sucessfully updated and saved in MinIO landing on: {output_table_path}")
-
+            logging.info(f"Table {table_name_converted} Sucessfully updated and saved in MinIO landing on: {output_table_path}")
+    
     except Exception as e:
         # Logging the Error
          logging.error(f"Error processing table {table_name}: {str(e)}")
 
-# Logging the Incremental ingestion
-logging.info(f"Incremental ingestion to landing completed!")
+
+if __name__ == "__main__":
+
+    # Logging the Start process from ingestion
+    logging.info("Starting incremental extract from Postgres adventureworks to MinIO landing...")
+
+    spark = configure_spark()
+    
+    # Landing path
+    landing_path = config_file.data_lakehouse_path["landing"]
+
+    # Creating a ThreadPool for divide all jobs among the workers and execute in parallel
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        
+        # Creating a list to Add all jobs into it
+        futures = []
+        for table_name in config_file.tables_postgres_adventureworks.values():
+            
+            # convert the table name from postgres to name in minIO s3
+            table_name_converted = func_file.convert_table_name(table_name)
+
+            # Output path
+            output_table_path = f"{landing_path}{table_name_converted}"
+
+            # Instead of calling the function to execute it, call the function by passing it to the executor
+            futures.append(executor.submit(process_table, spark, table_name, table_name_converted, output_table_path))
+
+
+        for future in as_completed(futures):
+            try:
+                # Where the all jobs is executing by the executors created with ThreadPoolExecutor
+                future.result()
+
+            except Execption as e:
+                logging.error(f"Error in one of parallel taks: {str(e)}")
+                
+    
+    # Logging the Incremental ingestion
+    logging.info(f"Incremental parallel ingestion to landing completed!")
+
+    # Stopping the sparkSession and clearing the cache
+    spark.stop()
+    spark.catalog.clearCache()
 
 

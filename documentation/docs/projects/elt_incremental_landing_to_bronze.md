@@ -1,4 +1,4 @@
-# MinIO Landing to Bronze Layer Incremental Ingestion
+# Landing Layer to Bronze Layer Incremental Ingestion
 
 ## Overview
 

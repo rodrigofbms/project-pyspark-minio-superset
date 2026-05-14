@@ -1,4 +1,4 @@
-# MinIO Landing to MinIO Bronze Full Load Ingestion
+# Landing Layer to Bronze Layer Full Load Ingestion
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# MinIO Silver to Gold Layer Incremental Ingestion
+# Silver Layer to Gold Layer Incremental Ingestion
 
 ## Overview
 

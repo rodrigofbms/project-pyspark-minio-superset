@@ -1,4 +1,4 @@
-# MinIO Bronze to Silver Layer Incremental Ingestion
+# Bronze Layer to Silver Layer Incremental Ingestion
 
 ## Overview
 

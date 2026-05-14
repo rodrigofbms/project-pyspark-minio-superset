@@ -1,4 +1,4 @@
-# MinIO Bronze to MinIO Silver Full Load Ingestion
+# Bronze Layer to Silver Layer Full Load Ingestion
 
 ## Overview
 

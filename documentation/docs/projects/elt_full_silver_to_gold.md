@@ -1,4 +1,4 @@
-# MinIO Silver to MinIO Gold Full Ingestion
+# Silver Layer to Gold Layer Full Ingestion
 
 ## Overview
 
