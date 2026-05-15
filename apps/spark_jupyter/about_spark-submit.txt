@@ -1,0 +1,8 @@
+To use spark-submit command you need to adds the necessaries packages to execute the pipeline on python
+This is a good configuration, because you dont need to down the container or change the python script to run the pipeline.
+You only need to set all packages each with it correct version, to ensure integrity and compatibility. Following the file path
+Example of the command below:
+
+spark-submit \
+--packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
+work/elt/incremental load/05_incremental_extract_postgresql_to_landing_minio_parquet.py

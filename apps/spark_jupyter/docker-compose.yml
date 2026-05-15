@@ -5,7 +5,7 @@ services:
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
-      - "4045:4040"
+      - "4043:4040"
       - "8083:8080" # Spark UI
       - "7077:7077" # Spark UI Jobs
     networks:

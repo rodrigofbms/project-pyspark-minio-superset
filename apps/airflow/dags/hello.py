@@ -3,11 +3,12 @@ from datetime import datetime
 import pendulum
 
 @dag(
+    'hello_world',
     schedule_interval='@once',  # Executar uma vez
-    start_date=datetime(2024, 2, 24),
+    start_date=datetime(2026, 5, 15),
     catchup=False,
     tags=["example"],
-    description='Um simples DAG de Hello World com decoradores'
+    description='Sample DAG Hello World'
 )
 
 def airflow_messages():

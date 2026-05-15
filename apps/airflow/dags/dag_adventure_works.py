@@ -4,13 +4,13 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.utils.task_group import TaskGroup
 
 default_args = {
-    'owner': 'Wallace Camargo',
+    'owner': 'Rodrigo Maturino',
     'depends_on_past': False,
 }
 
 # Definição da função run_container
 def run_container(dag, image, container_name, command):
-    runner = DockerOperator(
+    return DockerOperator(
         task_id=container_name,
         image=image,
         container_name=container_name,
@@ -18,23 +18,22 @@ def run_container(dag, image, container_name, command):
         auto_remove=True,
         command=command,
         docker_url="tcp://docker-proxy:2375",
-        network_mode="sparkanos",
+        network_mode="bigdata",
         mount_tmp_dir=False,  # Disable mounting the temporary directory
         dag=dag  # Passando a referência da DAG para o operador
     )
-    return runner
 
 # Definição da DAG
 with DAG(
     'adventure_works',
     default_args=default_args,
-    start_date=datetime(2024, 8, 1),  # Use a fixed start date
+    start_date=datetime(2026, 5, 15),  # Use a fixed start date
     schedule_interval='@weekly',
     catchup=False,  # Adiciona este parâmetro para evitar a execução de tarefas passadas
     tags=['sparkanos']
 ) as dag:
     
-    with TaskGroup(group_id="adventure_works") as etl:
+    with TaskGroup(group_id="bigdata_project") as elt:
 
         ingestion_parquet = run_container(
             dag=dag,
@@ -66,4 +65,4 @@ with DAG(
 
     ingestion_parquet >> ingestion_bronze >> processing_silver >> refinement_gold
 
-etl
+    elt
