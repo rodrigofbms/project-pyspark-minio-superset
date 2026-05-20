@@ -1,13 +1,12 @@
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from datetime import datetime
-import pendulum
 
 @dag(
     'hello_world',
-    schedule_interval='@once',  # Executar uma vez
+    schedule='@once',  # Executar uma vez
     start_date=datetime(2026, 5, 15),
     catchup=False,
-    tags=["example"],
+    tags=["exemplos"],
     description='Sample DAG Hello World'
 )
 
