@@ -60,7 +60,7 @@ with DAG(
 
     aggregation_gold = create_task(
         dag=dag,
-        image="rodrigofbms/project-pyspark-minio-superset",
+        image="rodrigofbms/spark-py:3.4.0-delta-spark2.12-3.1.0",
         container_name="aggregation_gold",
         command="/opt/spark/bin/spark-submit \
                 /app/08_incremental_agregation_silver_to_gold.py"

@@ -14,16 +14,13 @@ RUN apt-get update && \
 
 RUN pip install --no-cache-dir python-dotenv
 
-RUN pip install delta-spark==3.2.0
-
-# JAR Hadoop AWS 3.3.4
-RUN wget -P /opt/spark/jars/ https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
-
-# JAR aws java sdk bundle 1.12.262
-RUN wget -P /opt/spark/jars/ https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+RUN mkdir -p $SPARK_HOME/jars
 
 # JAR PostgreSQL 42.7.2
 RUN wget -P /opt/spark/jars/ https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.2/postgresql-42.7.2.jar
+
+# JAR delta spark 2.12-3.1.0
+RUN wget -P /opt/spark/jars/ https://repo1.maven.org/maven2/io/delta/delta-spark_2.12/3.1.0/delta-spark_2.12-3.1.0.jar
 
 # JAR delta storage 2.4.0
 RUN wget -P /opt/spark/jars/ https://repo1.maven.org/maven2/io/delta/delta-storage/2.4.0/delta-storage-2.4.0.jar
@@ -47,5 +44,3 @@ COPY apps/spark_jupyter/config/env /env/
 COPY apps/spark_jupyter/config/util /util/
 
 WORKDIR /app
-
-USER spark
