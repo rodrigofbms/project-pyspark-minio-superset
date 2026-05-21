@@ -52,9 +52,9 @@ def process_table(spark, table_name, query, output_table_path):
         logging.info(f"processing table {table_name}")
         
         # Getting max date value from minIO gold in the modifieddate column. limit at 1 result and get this result on 1º row at max_modifieddate column
-        logging.info("Reading table from gold layer")
         df_max_modifieddate_gold = spark.read.format("delta").load(output_table_path) \
             .select(functions.max("modifieddate").alias("max_modifieddate")).limit(1).collect()[0]["max_modifieddate"]
+
         
          #Transforming data from the silver layer where the “modifieddate” column is more recent than the “modifieddate” column in the gold layer
         query_update_data_to_gold = spark.sql(f"""

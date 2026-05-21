@@ -77,7 +77,7 @@ def process_table(spark, table_name, table_name_converted, input_table_path, out
             
             # Updating the dataframe on minIO landing
             logging.info(f"Updating table {table_name_converted}...")
-            df_with_month_partition.write.format("parquet").mode("append").partitionBy("month_key").save(output_table_path)
+            df_with_month_partition.write.format("delta").mode("append").partitionBy("month_key").save(output_table_path)
             
             # Logging the sucessfully process
             logging.info(f"Table {table_name_converted} Sucessfully updated and saved in MinIO bronze on: {output_table_path}")

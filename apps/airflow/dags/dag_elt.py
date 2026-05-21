@@ -1,4 +1,4 @@
-from airflow.sdk import DAG, task
+from airflow.sdk import DAG
 from datetime import datetime
 from airflow.providers.docker.operators.docker import DockerOperator
 
@@ -30,7 +30,7 @@ with DAG(
     tags=["ELT"],
 ) as dag:
     
-    ingestion_landing = create_task(
+    """ingestion_landing = create_task(
         dag=dag,
         image="rodrigofbms/project-pyspark-minio-superset",
         container_name="ingestion_landing",
@@ -56,15 +56,14 @@ with DAG(
         command="/opt/spark/bin/spark-submit \
                 --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
                 /app/07_incremental_transform_bronze_to_silver.py"
-    )
+    )"""
 
     aggregation_gold = create_task(
         dag=dag,
         image="rodrigofbms/project-pyspark-minio-superset",
         container_name="aggregation_gold",
         command="/opt/spark/bin/spark-submit \
-                --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
                 /app/08_incremental_agregation_silver_to_gold.py"
     )
 
-    ingestion_landing >> ingestion_bronze >> transform_silver >> aggregation_gold
+    aggregation_gold
