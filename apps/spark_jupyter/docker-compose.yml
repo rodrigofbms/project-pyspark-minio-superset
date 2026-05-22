@@ -4,10 +4,14 @@ services:
     container_name: spark-master
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    volumes:
+      - ${NOTEBOOK_PATH}:/home/jovyan/work # The container Spark-master need to know where is there the scripts python on jupyter notebook
+      - ./config/util/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf # Setting all dependecies on spark-defaults.conf file
+      - ./config/util/hive-site.xml:/opt/spark/conf/hive-site.xml # Setting all dependecies on hive-site.xml file
     ports:
-      - "4043:4040"
-      - "8083:8080" # Spark UI
-      - "7077:7077" # Spark UI Jobs
+      - "4043:4040" # Spark UI Jobs (Just when jobs running)
+      - "8083:8080" # Spark UI Cluster
+      - "7077:7077" # Port to communication between Master and Workers
     networks:
       - bigdata
 
@@ -34,17 +38,20 @@ services:
   jupyter:
     image: jupyter/pyspark-notebook:latest
     container_name: jupyter
-    user: root # You must log in as root to change the UID and GID
+    user: root # You must login as root to change the UID and GID
     ports:
       - "8888:8888"
     volumes:
       - ${NOTEBOOK_PATH}:/home/jovyan/work
+      - ./config/util/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf # The Jupyter Container need to know the spark-defaults to see all dependencies 
     environment:
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN} # Setting the jupyter token to login in the container when start
       - NB_UID=${VM_UID} # The variable how set the UID in Jupyter notebook
       - NB_GID=${VM_GID} # The variable how set the GID in Jupyter notebook
       - CHOWN_HOME=yes # Allows the owner of the /home/jovyan directory to be changed to the configured user (NB_UID/NB_GID)
       - CHOWN_HOME_OPTS=-R # apply a option in "chown" command, it "-R" means recursive (applies to all files and subfolders)
-      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell
+      - SPARK_MASTER_URL=spark://spark-master:7077 # Setting the spark master url for Jupyter terminal 
+      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell # Setting the spark master for Jupyter notebooks
     networks:
       - bigdata
 

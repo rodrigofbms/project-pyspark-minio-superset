@@ -127,7 +127,7 @@ if __name__ == "__main__":
                 # Where the all jobs is executing by the executors created with ThreadPoolExecutor
                 future.result()
 
-            except Execption as e:
+            except Exception as e:
                 logging.error(f"Error in one of parallel taks: {str(e)}")
                 
     
