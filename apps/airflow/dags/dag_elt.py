@@ -30,33 +30,30 @@ with DAG(
     tags=["ELT"],
 ) as dag:
     
-    """ingestion_landing = create_task(
+    ingestion_landing = create_task(
         dag=dag,
-        image="rodrigofbms/project-pyspark-minio-superset",
+        image="rodrigofbms/spark:3.5.0-delta-3.1.0",
         container_name="ingestion_landing",
-        command="/opt/spark/bin/spark-submit \
-                --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
+        command="spark-submit \
                 /app/05_incremental_extract_postgresql_to_landing_minio_parquet.py"
     )
 
 
     ingestion_bronze = create_task(
         dag=dag,
-        image="rodrigofbms/project-pyspark-minio-superset",
+        image="rodrigofbms/spark:3.5.0-delta-3.1.0",
         container_name="ingestion_bronze",
-        command="/opt/spark/bin/spark-submit \
-                --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
+        command="spark-submit \
                 /app/06_incremental_load_landing_to_bronze_delta.py"
     )
 
     transform_silver = create_task(
         dag=dag,
-        image="rodrigofbms/project-pyspark-minio-superset",
+        image="rodrigofbms/spark:3.5.0-delta-3.1.0",
         container_name="transform_silver",
-        command="/opt/spark/bin/spark-submit \
-                --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.367,org.postgresql:postgresql:42.7.2,io.delta:delta-spark_2.12:3.1.0 \
+        command="spark-submit \
                 /app/07_incremental_transform_bronze_to_silver.py"
-    )"""
+    )
 
     aggregation_gold = create_task(
         dag=dag,
@@ -66,4 +63,4 @@ with DAG(
                 /app/08_incremental_agregation_silver_to_gold.py"
     )
 
-    aggregation_gold
+    ingestion_landing >> ingestion_bronze >> transform_silver >> aggregation_gold
