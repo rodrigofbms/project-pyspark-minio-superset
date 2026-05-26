@@ -10,4 +10,4 @@ Trino: 8080
 
 ## Docs
 
-https://trino-io.translate.goog/docs/current/installation/containers.html?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc
+https://trino.io/docs/current/installation/containers.html

@@ -167,6 +167,7 @@ nav:
     - services/airflow/airflow.md
     - services/open_metadata/open_metadata.md
     - services/nginx_proxy_manager/nginx_proxy_manager.md
+    - services/docker/docker.md
   - Tools:
       - tools/index.md
   - Projects:
@@ -183,5 +184,7 @@ nav:
       - ELT Incremental Landing to Bronze: projects/elt_incremental_landing_to_bronze.md
       - ELT Incremental Bronze to Silver: projects/elt_incremental_bronze_to_silver.md
       - ELT Incremental Silver to Gold: projects/elt_incremental_silver_to_gold.md
-  - Support:
-    - support/index.md
+  - Problems solved:
+    - Spark Configuration: problems_solved/spark_config.md
+    - Docker Permission: problems_solved/docker_permission.md
+    - User VM conflicts with jupyter container: problems_solved/user_vm_conflicts.md

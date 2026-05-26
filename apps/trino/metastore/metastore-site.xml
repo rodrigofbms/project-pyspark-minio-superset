@@ -26,7 +26,7 @@
     
     <property>
         <name>javax.jdo.option.ConnectionPassword</name>
-        <value>mypass</value>
+        <value>123</value>
     </property>
     
     <property>

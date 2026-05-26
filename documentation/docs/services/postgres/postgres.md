@@ -8,6 +8,8 @@ PostgreSQL is a powerful, open-source relational database management system know
 
 PostgreSQL Database: 5435
 
-## Docs (From Docker Hub)
+## Docs 
 
-https://hub.docker.com/_/postgres
+https://hub.docker.com/_/postgres (From Docker Hub)
+
+https://www.postgresql.org/docs/ (From PostgreSQL Oficial)
