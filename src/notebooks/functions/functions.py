@@ -19,3 +19,10 @@ def get_query (table_name, queries, layer_path):
         return queries[table_name].format(layer_path=layer_path)
     else:
         raise ValueError(f"No query found for table: {table_name}")
+
+
+def get_pk (table_name, dictionary):
+    if table_name in dictionary:
+        return dictionary[table_name]
+    else:
+        raise ValueError(f"No primary key found for table: {table_name}")

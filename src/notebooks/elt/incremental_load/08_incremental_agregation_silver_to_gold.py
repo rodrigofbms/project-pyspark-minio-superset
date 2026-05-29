@@ -58,8 +58,8 @@ def process_table(spark, table_name, query, output_table_path):
         
          #Transforming data from the silver layer where the “modifieddate” column is more recent than the “modifieddate” column in the gold layer
         query_update_data_to_gold = spark.sql(f"""
-            select * from ({query}) as subquery
-            where modifieddate > '{df_max_modifieddate_gold}'
+            SELECT * FROM ({query}) AS subquery
+            WHERE modifieddate > '{df_max_modifieddate_gold}'
             """)
     
         # Number of rows returns from query to update, if exists

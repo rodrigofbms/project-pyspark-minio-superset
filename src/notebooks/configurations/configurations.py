@@ -40,6 +40,38 @@ tables_postgres_adventureworks = {
 }
 
 
+tables_pk = {
+    "sales_countryregioncurrency": "countryregioncode",
+    "sales_creditcard" : "creditcardid",
+    "sales_currency" : "currencycode",
+    "sales_currencyrate" : "currencyrateid",
+    "sales_customer" : "customerid",
+    "sales_personcreditcard": "businessentityid",
+    "sales_salesorderdetail" : "salesorderdetailid",
+    "sales_salesorderheader" : "salesorderid",
+    "sales_salesorderheadersalesreason" : "salesorderid",
+    "sales_salesperson": "businessentityid",
+    "sales_salespersonquotahistory": "businessentityid",
+    "sales_salesreason": "salesreasonid",
+    "sales_salestaxrate": "salestaxrateid",
+    "sales_salesterritory": "territoryid",
+    "sales_salesterritoryhistory": "businessentityid",
+    "sales_shoppingcartitem": "shoppingcartitemid",
+    "sales_specialoffer": "specialofferid",
+    "sales_specialofferproduct": "specialofferid",
+    "sales_store": "businessentityid",
+    "humanresources_employee": "businessentityid",
+    "humanresources_department": "departmentid",
+    "person_address": "addressid",
+    "person_countryregion": "countryregioncode",
+    "person_person": "businessentityid",
+    "person_stateprovince": "stateprovinceid",
+    "production_product": "productid",
+    "purchasing_shipmethod": "shipmethodid"
+}
+
+
+
 # ---------------------------
 # ---- Silver tables --------
 # ---------------------------
@@ -163,7 +195,7 @@ queries_silver = {
     f""" 
     SELECT 
     territoryid,
-    "name",
+    name,
     countryregioncode,
     "group",
     CAST(salesytd as NUMERIC(10,2)),
@@ -201,7 +233,7 @@ queries_silver = {
     specialofferid,
     description,
     discountpct,
-    "type",
+    type,
     category,
     minqty,
     COALESCE(maxqty, 0) as maxqty,
@@ -223,7 +255,7 @@ queries_silver = {
     f"""
     SELECT
     businessentityid,
-    "name",
+    name,
     salespersonid,
     rowguid,
     month_key,
@@ -276,7 +308,7 @@ queries_silver = {
     stateprovinceid,
     stateprovincecode,
     countryregioncode,
-    "name",
+    name,
     territoryid,
     rowguid,
     modifieddate,
@@ -309,7 +341,7 @@ queries_silver = {
     f""" 
     SELECT
     productid,
-    "name",
+    name,
     sellstartdate,
     coalesce(sellenddate,'2099-12-12') as sellenddate,
     rowguid,
@@ -324,7 +356,7 @@ queries_silver = {
 
 
 # ---------------------------
-# ---- Gold tables ----------
+# ------ Gold tables --------
 # ---------------------------
 queries_gold = {
 
@@ -334,11 +366,11 @@ queries_gold = {
     UPPER(cr.name) AS country,
     COUNT(*) AS sales_quantity,
     ROUND(SUM(s.subtotal)) AS total_sales,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_sales_salesterritory` st ON s.territoryid = st.territoryid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = st.countryregioncode
-    GROUP BY cr.name, s.modifieddate
+    GROUP BY cr.name, s.last_update
     """,
     
     "sales_per_customer":
@@ -347,11 +379,11 @@ queries_gold = {
     p.businessentityid AS customer_id,
     UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS customer_name,
     ROUND(SUM(s.subtotal)) AS total,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_sales_customer` c ON s.customerid = c.customerid
     INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = c.personid
-    GROUP BY p.businessentityid, p.firstname, p.lastname, s.modifieddate
+    GROUP BY p.businessentityid, p.firstname, p.lastname, s.last_update
     """,
 
     "sales_per_employee":
@@ -360,12 +392,12 @@ queries_gold = {
     p.businessentityid AS employee_id,
     UPPER(CONCAT(p.firstname, ' ' , p.lastname)) AS employee_name,
     COUNT(*) AS quantity_sales,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
     INNER JOIN delta.`{{layer_path}}silver_sales_salesperson` sp ON sp.businessentityid = s.salespersonid
     INNER JOIN delta.`{{layer_path}}silver_humanresources_employee` e ON e.businessentityid = sp.businessentityid
     INNER JOIN delta.`{{layer_path}}silver_person_person` p ON p.businessentityid = e.businessentityid
-    GROUP BY p.businessentityid, p.firstname, p.lastname, s.modifieddate
+    GROUP BY p.businessentityid, p.firstname, p.lastname, s.last_update
     """,
 
     "sales_per_city_country":
@@ -375,12 +407,12 @@ queries_gold = {
     UPPER(a.city) AS city_sale,
     COUNT(*) AS quantity_sales,
     ROUND(SUM(s.subtotal)) AS total_sales,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_person_address` a ON a.addressid = s.shiptoaddressid
     INNER JOIN delta.`{{layer_path}}silver_person_stateprovince` sp ON sp.stateprovinceid = a.stateprovinceid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = sp.countryregioncode
-    GROUP BY cr.name, a.city, s.modifieddate
+    GROUP BY cr.name, a.city, s.last_update
     """,
 
     "quantity_sales_per_ship_method":
@@ -394,10 +426,10 @@ queries_gold = {
     	WHEN (s.duedate - s.orderdate) > INTERVAL '14 days' THEN 1
     	ELSE 0
     	END) AS delayed_deliveries,
-     s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_purchasing_shipmethod` sm on sm.shipmethodid = s.shipmethodid
-    GROUP BY sm.name, sm.shipbase, sm.shiprate, s.modifieddate
+    GROUP BY sm.name, sm.shipbase, sm.shiprate, s.last_update
     """,
 
     "sales_per_card_type":
@@ -405,10 +437,10 @@ queries_gold = {
     SELECT
     UPPER(cc.cardtype) AS card_type,
     COUNT(*) AS sales_quantity,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s 
     INNER JOIN delta.`{{layer_path}}silver_sales_creditcard` cc ON cc.creditcardid = s.creditcardid
-    GROUP BY cc.cardtype, s.modifieddate
+    GROUP BY cc.cardtype, s.last_update
     """,
 
     "quantity_sales_per_product":
@@ -418,11 +450,11 @@ queries_gold = {
     UPPER(p.name) AS product_name,
     SUM(s.orderqty) AS quantity_sales,
     COUNT(s.specialofferid != 1) AS quantity_sales_discount,
-    s.modifieddate
+    s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderdetail` s
     INNER JOIN delta.`{{layer_path}}silver_sales_specialofferproduct` sop ON sop.productid = s.productid
     INNER JOIN delta.`{{layer_path}}silver_production_product` p ON p.productid = sop.productid
-    GROUP BY p.productid, p.name, s.modifieddate
+    GROUP BY p.productid, p.name, s.last_update
     """
 
 

@@ -22,6 +22,7 @@ apps/minio/.env
 apps/airflow/dags/__pycache__/*
 apps/airflow/dags/__pycache__/
 
+
 #Spark 
 src/notebooks/configs/.ipynb_checkpoints/*
 src/notebooks/functions/.ipynb_checkpoints/*
