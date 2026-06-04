@@ -12,6 +12,9 @@ ENV PATH=$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH
 # Install the python-dotenv
 RUN pip install --no-cache-dir python-dotenv
 
+# install the delta-spark
+RUN pip install --no-cache-dir delta-spark==3.1.0
+
 # Create a directory call "app"
 RUN mkdir -p /app
 

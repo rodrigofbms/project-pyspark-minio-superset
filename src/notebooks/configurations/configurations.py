@@ -147,7 +147,7 @@ queries_silver = {
     duedate,
     modifieddate,
     month_key,
-    rowguid
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_salesorderheader` 
     """,
 
@@ -167,9 +167,9 @@ queries_silver = {
     CAST(commissionpct as NUMERIC(10,3)),
     CAST(salesytd as NUMERIC(10,2)),
     CAST(saleslastyear as NUMERIC(10,2)),
-    rowguid,
     month_key,
-    modifieddate
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_salesperson`
     """,
 
@@ -202,9 +202,9 @@ queries_silver = {
     CAST(saleslastyear as NUMERIC(10,2)),
     costytd,
     costlastyear,
-    rowguid,
     month_key,
-    modifieddate
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_salesterritory` 
     """,
 
@@ -215,9 +215,9 @@ queries_silver = {
     territoryid,
     startdate,
     COALESCE(enddate,'2099-12-12') as enddate,
-    rowguid,
     month_key,
-    modifieddate
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_salesterritoryhistory`
     """,
 
@@ -239,9 +239,9 @@ queries_silver = {
     COALESCE(maxqty, 0) as maxqty,
     startdate,
     enddate,
-    modifieddate,
     month_key,
-    rowguid
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_specialoffer` 
     """,
 
@@ -257,9 +257,9 @@ queries_silver = {
     businessentityid,
     name,
     salespersonid,
-    rowguid,
     month_key,
-    modifieddate
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_sales_store` 
     """,
 
@@ -271,9 +271,9 @@ queries_silver = {
     jobtitle,
     gender,
     hiredate,
-    modifieddate,
     month_key,
-    rowguid
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_humanresources_employee`
     """,
 
@@ -296,9 +296,9 @@ queries_silver = {
     persontype,
     firstname,
     lastname,
-    modifieddate,
     month_key,
-    rowguid
+    modifieddate,
+    row_hash
     FROM delta.`{{layer_path}}bronze_person_person` 
     """,
 
@@ -310,9 +310,9 @@ queries_silver = {
     countryregioncode,
     name,
     territoryid,
-    rowguid,
+    month_key,
     modifieddate,
-    month_key
+    row_hash
     FROM delta.`{{layer_path}}bronze_person_stateprovince`
     """,
 
@@ -325,8 +325,9 @@ queries_silver = {
     city,
     postalcode,
     rowguid,
+    month_key,
     modifieddate,
-    month_key
+    row_hash
     FROM delta.`{{layer_path}}bronze_person_address`
     """,
 
@@ -344,15 +345,26 @@ queries_silver = {
     name,
     sellstartdate,
     coalesce(sellenddate,'2099-12-12') as sellenddate,
-    rowguid,
+    month_key,
     modifieddate,
-    month_key
+    row_hash
     from delta.`{{layer_path}}bronze_production_product`
     """
 
 }
 
 
+gold_pks = {
+    
+    "sales_by_country": "country_code",
+    "sales_per_customer": "customer_id",
+    "sales_per_employee": "employee_id",
+    "sales_per_city_country": "city_sale",
+    "quantity_sales_per_ship_method": "ship_id",
+    "sales_per_card_type": "card_type",
+    "quantity_sales_per_product": "product_id"
+    
+}
 
 
 # ---------------------------
@@ -362,7 +374,8 @@ queries_gold = {
 
     "sales_by_country":
     f"""
-    SELECT 
+    SELECT
+    cr.countryregioncode AS country_code,
     UPPER(cr.name) AS country,
     COUNT(*) AS sales_quantity,
     ROUND(SUM(s.subtotal)) AS total_sales,
@@ -370,7 +383,7 @@ queries_gold = {
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_sales_salesterritory` st ON s.territoryid = st.territoryid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = st.countryregioncode
-    GROUP BY cr.name, s.last_update
+    GROUP BY cr.name, s.last_update, cr.countryregioncode
     """,
     
     "sales_per_customer":
@@ -413,11 +426,13 @@ queries_gold = {
     INNER JOIN delta.`{{layer_path}}silver_person_stateprovince` sp ON sp.stateprovinceid = a.stateprovinceid
     INNER JOIN delta.`{{layer_path}}silver_person_countryregion` cr ON cr.countryregioncode = sp.countryregioncode
     GROUP BY cr.name, a.city, s.last_update
+    ORDER BY cr.name, a.city
     """,
 
     "quantity_sales_per_ship_method":
     f""" 
-    SELECT 
+    SELECT
+    sm.shipmethodid as ship_id,
     UPPER(sm.name) AS ship_name,
     sm.shipbase AS ship_base,
     sm.shiprate AS ship_rate,
@@ -429,7 +444,7 @@ queries_gold = {
     s.last_update
     FROM delta.`{{layer_path}}silver_sales_salesorderheader` s
     INNER JOIN delta.`{{layer_path}}silver_purchasing_shipmethod` sm on sm.shipmethodid = s.shipmethodid
-    GROUP BY sm.name, sm.shipbase, sm.shiprate, s.last_update
+    GROUP BY sm.shipmethodid, sm.name, sm.shipbase, sm.shiprate, s.last_update
     """,
 
     "sales_per_card_type":
@@ -455,6 +470,7 @@ queries_gold = {
     INNER JOIN delta.`{{layer_path}}silver_sales_specialofferproduct` sop ON sop.productid = s.productid
     INNER JOIN delta.`{{layer_path}}silver_production_product` p ON p.productid = sop.productid
     GROUP BY p.productid, p.name, s.last_update
+    ORDER BY quantity_sales DESC
     """
 
 
