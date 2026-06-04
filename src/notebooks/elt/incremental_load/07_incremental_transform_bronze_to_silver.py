@@ -1,10 +1,10 @@
-# Creating the same file in .py to use it on apache airflow orchestration
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession, functions
 from pyspark.sql.functions import date_format
 import logging
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from delta.tables import DeltaTable
 
 # Import for get the environment variables 
 from dotenv import load_dotenv
@@ -51,10 +51,31 @@ def process_table(spark, table_name, query, output_table_path):
         # Logging the processing
         logging.info(f"processing table {table_name}")
         
-        # Getting max date value from minIO silver in the modifieddate column. limit at 1 result and get this result on 1º row at max_modifieddate column
-        df_max_modifieddate_silver = spark.read.format("delta").load(output_table_path) \
-            .select(functions.max("modifieddate").alias("max_modifieddate")).limit(1).collect()[0]["max_modifieddate"]
-    
+        try:
+
+            df_silver = spark.read.format("delta").load(output_table_path)
+
+            # Verify if the table have rows before the collect function
+            if df_silver.count() > 0:
+                
+                # Getting max date value from minIO silver in the modifieddate column. limit at 1 result and get this result on 1º row at max_modifieddate column
+                df_max_modifieddate_silver = df_silver.select(functions.max("modifieddate").alias("max_modifieddate")) \
+                .limit(1).collect()[0]["max_modifieddate"]
+                
+                # If the table exists but is empty, or if any row has an empty “modifiedate” column (return None)
+                if df_max_modifieddate_silver is None:
+                    
+                    df_max_modifieddate_silver = "1900-01-01 00:00:00"
+
+            else:
+                df_max_modifieddate_silver = "1900-01-01 00:00:00"
+                
+        except Exception:
+            
+            logging.info(f"Silver table for {table_name} not found. Starting initial load.")
+            
+            # If the path does not exist in MinIO (First run)
+            df_max_modifieddate_silver = "1900-01-01 00:00:00"
         
         
          #Transforming data from the bronze layer where the “modifieddate” column is more recent than the “modifieddate” column in the silver layer
@@ -75,15 +96,38 @@ def process_table(spark, table_name, query, output_table_path):
             logging.info(f"Number of new rows to update for table {table_name}: {rows_to_update}")
             
             # Adding a new column date related the load data
-            df_with_update_date = func_file.add_data_last_update(query_update_data_to_silver)
+            df_with_last_update = func_file.add_data_last_update(query_update_data_to_silver)
     
             # modifing dataframe to add a new column "month_key" to create a partition on the minIO silver based on modifieddate column
-            df_with_month_partition = df_with_update_date.withColumn("month_key", date_format(df_with_update_date["modifieddate"], "yyyy-MM"))
-            
-            # Updating the dataframe on minIO silver
-            logging.info(f"Updating table {table_name}...")
-            df_with_month_partition.write.format("delta").mode("append").partitionBy("month_key").save(output_table_path)
-            
+            df_with_month_partition = df_with_last_update.withColumn("month_key", date_format(df_with_last_update["modifieddate"], "yyyy-MM"))
+
+            # Verify if the table path exists
+            if not DeltaTable.isDeltaTable(spark, output_table_path):
+                # If the table does not exist, create it.
+                logging.info(f"First load. Creating table {table_name}...")
+                df_with_month_partition.write.format("delta").mode("overwrite").partitionBy("month_key").save(output_table_path)
+                
+            else:
+                # Updating the dataframe on minIO silver
+                logging.info(f"Updating table {table_name}...")
+                
+                # If the table exists, do a merge
+                # Instance of the target Silver Delta Table
+                target_table = DeltaTable.forPath(spark, output_table_path)
+
+                # Starting with the silver tier, you don't need to create the hash because it was already created in the bronze tier.
+                # Therefore, if the tier doesn't exist, all new rows will be added; if it does exist, a comparison will be made
+                # with the ‘row_hash’ column of each row. If it matches, the entire row will be updated; 
+                # if it doesn't match any row, it will be inserted.
+                target_table.alias("target") \
+                    .merge(
+                        df_with_month_partition.alias("updates"),
+                        "target.row_hash = updates.row_hash" 
+                    ) \
+                    .whenMatchedUpdateAll() \
+                    .whenNotMatchedInsertAll() \
+                    .execute()
+                
             # Logging the sucessfully process
             logging.info(f"Table {table_name} Sucessfully updated and saved in MinIO silver on: {output_table_path}")
             

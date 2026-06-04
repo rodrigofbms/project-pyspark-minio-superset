@@ -1,10 +1,10 @@
-# Creating the same file in .py to use it on apache airflow orchestration
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession, functions
 from pyspark.sql.functions import date_format
 import logging
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from delta.tables import DeltaTable
 
 # Import for get the environment variables 
 from dotenv import load_dotenv
@@ -44,22 +44,43 @@ def configure_spark():
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-def process_table(spark, table_name, query, output_table_path):
+def process_table(spark, table_name, query, primary_key, output_table_path):
 
     try:
         
          # Logging the processing
         logging.info(f"processing table {table_name}")
         
-        # Getting max date value from minIO gold in the modifieddate column. limit at 1 result and get this result on 1º row at max_modifieddate column
-        df_max_modifieddate_gold = spark.read.format("delta").load(output_table_path) \
-            .select(functions.max("modifieddate").alias("max_modifieddate")).limit(1).collect()[0]["max_modifieddate"]
+        
+
+        try:
+            df_gold = spark.read.format("delta").load(output_table_path)
+
+            if df_gold.count() > 0:
+
+                # Getting max date value from minIO gold in the last_update column. limit at 1 result and get this result on 1º row
+                # at max_modifieddate column. In this layer, it’s best to use the highest value from the “last_update” column, 
+                # because if you use the highest value from the “modifieddate” column, it will return different dates for each row, 
+                # rather than the same date for all the rows that were loaded. This directly affects the SQL query used to view the data 
+                # — for example, when using “group by” — so it’s best to use the “last_update” column to present the data in the most effective way.
+                
+                df_max_last_update_gold = df_gold.select(functions.max("last_update").alias("max_last_update")) \
+                .limit(1).collect()[0]["max_last_update"]
+
+                if df_max_last_update_gold is None:
+                    df_max_last_update_gold = "1900-01-01 00:00:00"
+
+            else:
+                df_max_last_update_gold = "1900-01-01 00:00:00"
+
+        except Exception:
+            df_max_last_update_gold = "1900-01-01 00:00:00"
 
         
          #Transforming data from the silver layer where the “modifieddate” column is more recent than the “modifieddate” column in the gold layer
         query_update_data_to_gold = spark.sql(f"""
-            SELECT * FROM ({query}) AS subquery
-            WHERE modifieddate > '{df_max_modifieddate_gold}'
+            select * from ({query}) as subquery
+            where last_update > '{df_max_last_update_gold}'
             """)
     
         # Number of rows returns from query to update, if exists
@@ -72,19 +93,40 @@ def process_table(spark, table_name, query, output_table_path):
         else:
             # Logging number of rows to update
             logging.info(f"Number of new rows to update for table {table_name}: {rows_to_update}")
-            
+
             # Adding a new column date related the load data
             df_with_update_date = func_file.add_data_last_update(query_update_data_to_gold)
-    
-            # modifing dataframe for add a new column "month_key" to create a partition on the minIO gold based on modifieddate column
-            df_with_month_partition = df_with_update_date.withColumn("month_key", date_format(df_with_update_date["modifieddate"], "yyyy-MM"))
-            
-            # Updating the dataframe on minIO gold
-            logging.info(f"Updating table {table_name}...")
-            df_with_month_partition.write.format("delta").mode("append").partitionBy("month_key").save(output_table_path)
-            
+
+            # As primary_key is just a single column, example: “customer_id,” pass it directly to the col() function, 
+            # using a cast() because the ‘sha2’ function does not accept numeric data types, and finally generate the hash
+            gold_hash_expr = functions.sha2(functions.col(primary_key).cast("string"), 256)
+        
+            df_with_gold_hash =  df_with_update_date.withColumn("gold_row_hash", gold_hash_expr)
+
+            if not DeltaTable.isDeltaTable(spark, output_table_path):
+                # Updating the dataframe on minIO gold
+                logging.info(f"First Load. Creating Gold table {table_name}...")
+                
+                df_with_gold_hash.write.format("delta").mode("overwrite").save(output_table_path)
+
+            else:
+                # Updating the dataframe on minIO gold
+                logging.info(f"Updating table {table_name}...")
+                
+                target_table = DeltaTable.forPath(spark, output_table_path)
+
+                # O Match do Merge é feito pelo NOVO HASH da agregação
+                target_table.alias("target") \
+                    .merge(
+                        df_with_gold_hash.alias("updates"),
+                        "target.gold_row_hash = updates.gold_row_hash"
+                    ) \
+                    .whenMatchedUpdateAll() \
+                    .whenNotMatchedInsertAll() \
+                    .execute()
+                
             # Logging the sucessfully process
-            logging.info(f"Table {table_name} Sucessfully updated and saved in MinIO silver on: {output_table_path}")
+            logging.info(f"Table {table_name} Sucessfully updated and saved in MinIO Gold on: {output_table_path}")
 
     except Exception as e:
         # Logging the Error
@@ -107,6 +149,9 @@ if __name__ == "__main__":
 
     queries_tables = config_file.queries_gold
 
+    # Dictionary with primary keys from tables
+    dictionary_pks = config_file.gold_pks
+
     # Creating a ThreadPool for divide all jobs among the workers and execute in parallel
     with ThreadPoolExecutor(max_workers=8) as executor:
         
@@ -121,9 +166,12 @@ if __name__ == "__main__":
             gold_table_path = f"{gold_path}gold_{table_name}"
     
             query = func_file.get_query(table_name, queries_tables, silver_path)
+
+            #Primary key from table_name
+            primary_key = func_file.get_pk(table_name, dictionary_pks)
     
             # Instead of calling the function to execute it, call the function by passing it to the executor
-            futures.append(executor.submit(process_table, spark, table_name, query, gold_table_path))
+            futures.append(executor.submit(process_table, spark, table_name, query, primary_key, gold_table_path))
 
         
         for future in as_completed(futures):
