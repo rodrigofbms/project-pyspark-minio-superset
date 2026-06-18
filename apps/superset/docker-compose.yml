@@ -57,6 +57,11 @@ services:
       - bigdata
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   superset:
     env_file: docker/.env-non-dev
@@ -65,6 +70,8 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     user: "root"
     restart: unless-stopped
+    environment:
+      - FAB_API_SWAGGER_UI=True
     ports:
       - 8088:8088
     depends_on: *superset-depends-on
@@ -100,6 +107,12 @@ services:
       - bigdata
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A superset.tasks.celery_app:app inspect ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   superset-worker-beat:
     image: *superset-image
@@ -114,6 +127,12 @@ services:
       - bigdata
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; import sys; open('/proc/1/cmdline', 'rb').read()"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
 volumes:
   superset_home:
